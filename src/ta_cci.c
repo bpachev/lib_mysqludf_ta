@@ -89,13 +89,13 @@ DLLEXP void ta_cci_agg_deinit(UDF_INIT *initid)
 
 DLLEXP void ta_cci_agg_add(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *error)
 {
-	ta_cci_data *data = (ta_cci_data *)initid->ptr;
-	int *periods = (int *)args->args[CCI_NUM_ARGS-1];
-
-	if (args->args[0] == NULL) {
-		return;
+	for (int i = 0; i < CCI_NUM_ARGS; i++) {
+		if (args->args[i] == NULL) return;
 	}
 
+	ta_cci_data *data = (ta_cci_data *)initid->ptr;
+	int *periods = (int *)args->args[CCI_NUM_ARGS-1];
+	
 	data->current = data->current + 1;
 	data->values[data->next_slot] = get_true_value(args);
 	data->next_slot = getNextSlot(data->next_slot, *periods);
@@ -123,7 +123,7 @@ DLLEXP double ta_cci_agg(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *
 			sum += data->values[i];
 		
 		double mean = sum / n;
-		double value = data->values[(data->current-1) % (n)];
+		double value = data->values[(data->current+n-1) % (n)];
 		
 		sum = 0.0;
 		for (i = 0; i < n; i++)
