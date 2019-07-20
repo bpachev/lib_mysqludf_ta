@@ -13,6 +13,7 @@ lib_mysqludf_ta_la_SOURCES = src/ta_libmysqludf_ta.h \
 				src/ta_sma_agg.c \
 				src/ta_rsi_agg.c \
 				src/ta_stddevp_agg.c \
+				src/ta_ema_agg.c \
 				src/ta_cci.c \
 				src/ta_tr.c
 lib_mysqludf_ta_la_CFLAGS = -Wall -c @MYSQL_CFLAGS@
