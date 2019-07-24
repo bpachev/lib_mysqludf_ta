@@ -15,6 +15,12 @@ lib_mysqludf_ta_la_SOURCES = src/ta_libmysqludf_ta.h \
 				src/ta_stddevp_agg.c \
 				src/ta_ema_agg.c \
 				src/ta_cci.c \
+				src/ta_dmi.c \
+				src/ta_adx.c \
+				src/ta_willr.c \
+				src/ta_roc_agg.c \
+				src/ta_slope_agg.c \
+				src/ta_r2.c \
 				src/ta_tr.c
 lib_mysqludf_ta_la_CFLAGS = -Wall -c @MYSQL_CFLAGS@
 lib_mysqludf_ta_la_LDFLAGS = -shared
