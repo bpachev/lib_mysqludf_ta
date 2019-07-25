@@ -110,13 +110,11 @@ DLLEXP void ta_rsi_agg_add(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char
 			currentLoss = data->previous_close - *value;
 
 		if ((*periods) + 2 == data->current) {
-			data->avg_gain = (data->avg_gain + currentGain) / *periods;
-			data->avg_loss = (data->avg_loss + currentLoss) / *periods;
-		} else {
-			data->avg_gain = (data->avg_gain * (*periods - 1) + currentGain ) / *periods;
-			data->avg_loss = (data->avg_loss * (*periods - 1) + currentLoss ) / *periods;
+			data->avg_gain = (data->avg_gain) / *periods;
+			data->avg_loss = (data->avg_loss) / *periods;
 		}
-
+		data->avg_gain = (data->avg_gain * (*periods - 1) + currentGain ) / *periods;
+		data->avg_loss = (data->avg_loss * (*periods - 1) + currentLoss ) / *periods;
 		data->previous_close = *value;
 	}
 }

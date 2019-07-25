@@ -35,6 +35,7 @@ void reset_adx_data(ta_adx_data * data)
 	data->last_low = 0.0;
 	data->d_plus_sum = 0;
 	data->d_minus_sum = 0;
+	data->adx_sum = 0;
 }
 
 DLLEXP my_bool ta_adx_agg_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
@@ -92,43 +93,45 @@ DLLEXP void ta_adx_agg_add(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char
 	int periods = *(int *)args->args[ADX_NUM_ARGS-1];
 	double high = *(double*)(args->args[0]);	
 	double low = *(double*)(args->args[1]);
+	data->current = data->current + 1;
 
-	if (data->current > 0)
+	if (data->current > 1)
 	{
 		double d_plus = high-data->last_high;
 		double d_minus = data->last_low - low;
 		if (d_plus < 0) d_plus = 0;
 		if (d_minus < 0) d_minus = 0;
-		if (d_plus > d_minus) {
+		if (d_plus > d_minus) d_minus = 0;
+		else if (d_plus == d_minus) {
+			d_plus = 0;
 			d_minus = 0;
 		}
-		else d_plus = 0;
+		else if (d_minus > d_plus) d_plus = 0;
 
 		if (data->current <= periods) {
 			data->d_plus_sum += d_plus;
 			data->d_minus_sum += d_minus;
-			if (data->current == periods) {
-				data->d_plus_sum /= periods;
-				data->d_minus_sum /= periods;
-			}
 		}
 		else {
-			data->d_plus_sum += (d_plus-data->d_plus_sum)/periods;
-			data->d_minus_sum += (d_minus-data->d_minus_sum)/periods;
+			data->d_plus_sum += d_plus - data->d_plus_sum/periods;
+			data->d_minus_sum += d_minus - data->d_minus_sum/periods;
 		}
+
 	}
-	if (data->current > periods) {
-		double dx = fabs(data->d_plus_sum-data->d_minus_sum) / fabs(data->d_plus_sum+data->d_minus_sum);
-		if (data->current <= 2*periods) {
-			data->adx_sum += dx;
-			if (data->current == 2*periods) {
+	if (data->current >= periods) {
+		double dx;
+		double denom = data->d_plus_sum+data->d_minus_sum;
+		if (denom == 0) dx = 1;
+		else dx = fabs(data->d_plus_sum-data->d_minus_sum) / denom;
+		if (data->current <= 2*periods-1) {
+			data->adx_sum = data->adx_sum + dx;
+			if (data->current == 2*periods-1) {
 				data->adx_sum /= periods;
 			}
 		}
 		else data->adx_sum += (dx - data->adx_sum)/periods;
 	}
 
-	data->current = data->current + 1;
 	data->last_high = high;
 	data->last_low = low;
 }
@@ -145,10 +148,10 @@ DLLEXP double ta_adx_agg(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *
 	int *periods = (int *)args->args[ADX_NUM_ARGS-1];
 	int n = *periods;
 
-	if (2*n >= data->current) {
+	if (2*n-1 > data->current) {
 		*is_null = 1;
 		return 0.0;
 	} else {
-		return 	100*data->adx_sum;	
+		return 	100*(data->adx_sum);	
 	}
 }

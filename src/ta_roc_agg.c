@@ -102,7 +102,7 @@ DLLEXP double ta_roc_agg(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *
 		return 0.0;
 	} else {
 		int current_slot = get_lastSlot(data->next_slot, *periods+1);
-		return data->values[current_slot]/data->values[data->next_slot];
+		return 100*(data->values[current_slot]-data->values[data->next_slot])/data->values[data->next_slot];
 	}
 
 }

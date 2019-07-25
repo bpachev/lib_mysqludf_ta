@@ -39,10 +39,10 @@ void reset_dmi_data(ta_dmi_data * data)
 	data->current = 0;
 	data->last_high = 0.0;
 	data->last_low = 0.0;
-	data->last_close = 0;
-	data->d_plus_sum = 0;
-	data->d_minus_sum = 0;
-	data->tr_sum = 0;
+	data->last_close = 0.0;
+	data->d_plus_sum = 0.0;
+	data->d_minus_sum = 0.0;
+	data->tr_sum = 0.0;
 }
 
 DLLEXP my_bool ta_dmi_agg_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
@@ -105,37 +105,34 @@ DLLEXP void ta_dmi_agg_add(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char
 	double close = *(double*)(args->args[0]);
 	double high = *(double*)(args->args[1]);	
 	double low = *(double*)(args->args[2]);
+	data->current = data->current + 1;
 
-	if (data->current > 0)
+	if (data->current > 1)
 	{
 		double d_plus = high-data->last_high;
 		double d_minus = data->last_low - low;
 		if (d_plus < 0) d_plus = 0;
 		if (d_minus < 0) d_minus = 0;
-		if (d_plus > d_minus) {
+		if (d_plus > d_minus) d_minus = 0;
+		else if (d_plus == d_minus) {
+			d_plus = 0;
 			d_minus = 0;
 		}
-		else d_plus = 0;
+		else if (d_minus > d_plus) d_plus = 0;
 		double tr = _DMI_MAX(high, data->last_close) - _DMI_MIN(low, data->last_close);
 
 		if (data->current <= periods) {
 			data->d_plus_sum += d_plus;
 			data->d_minus_sum += d_minus;
 			data->tr_sum += tr;
-			if (data->current == periods) {
-				data->d_plus_sum /= periods;
-				data->d_minus_sum /= periods;
-				data->tr_sum /= periods;
-			}
 		}
 		else {
-			data->d_plus_sum += (d_plus-data->d_plus_sum)/periods;
-			data->d_minus_sum += (d_minus-data->d_minus_sum)/periods;
-			data->tr_sum += (tr-data->tr_sum)/periods;
+			data->d_plus_sum += d_plus - data->d_plus_sum/periods;
+			data->d_minus_sum += d_minus - data->d_minus_sum/periods;
+			data->tr_sum += tr - data->tr_sum/periods;
 		}
 	}
 
-	data->current = data->current + 1;
 	data->last_close = close;
 	data->last_high = high;
 	data->last_low = low;
