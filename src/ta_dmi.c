@@ -154,7 +154,8 @@ DLLEXP double ta_dmi_agg(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *
 		*is_null = 1;
 		return 0.0;
 	} else {
-		//TODO:: Figure out what Otso means by DMIS
-		return 	(data->type == PLUS) ? 100*data->d_plus_sum/data->tr_sum : 100*data->d_minus_sum/data->tr_sum;	
+		if (data->type == PLUS) return 100*data->d_plus_sum/data->tr_sum;
+		else if (data->type == MINUS) return 100*data->d_minus_sum/data->tr_sum;
+		else return 100*(data->d_plus_sum+data->d_minus_sum)/data->tr_sum;	
 	}
 }
