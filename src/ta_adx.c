@@ -122,14 +122,14 @@ DLLEXP void ta_adx_agg_add(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char
 		}
 
 	}
-	if (data->current >= periods) {
+	if (data->current > periods) {
 		double dx;
 		double denom = data->d_plus_sum+data->d_minus_sum;
 		if (denom == 0) dx = 0;
 		else dx = fabs(data->d_plus_sum-data->d_minus_sum) / denom;
-		if (data->current <= 2*periods-1) {
+		if (data->current <= 2*periods) {
 			data->adx_sum = data->adx_sum + dx;
-			if (data->current == 2*periods-1) {
+			if (data->current == 2*periods) {
 				data->adx_sum /= periods;
 			}
 		}
