@@ -97,7 +97,7 @@ DLLEXP double ta_roc_agg(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *
 	int *periods = (int *)args->args[1];
 
 
-	if (*periods > data->current || *periods < 1) {
+	if (*periods >= data->current || *periods < 1) {
 		*is_null = 1;
 		return 0.0;
 	} else {

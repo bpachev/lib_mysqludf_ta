@@ -111,6 +111,10 @@ DLLEXP void ta_adx_agg_add(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char
 		if (data->current <= periods) {
 			data->d_plus_sum += d_plus;
 			data->d_minus_sum += d_minus;
+//			if (data->current == periods) {
+//				data->d_plus_sum /= periods;
+//				data->d_minus_sum /= periods;
+//			}
 		}
 		else {
 			data->d_plus_sum += d_plus - data->d_plus_sum/periods;
@@ -121,7 +125,7 @@ DLLEXP void ta_adx_agg_add(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char
 	if (data->current >= periods) {
 		double dx;
 		double denom = data->d_plus_sum+data->d_minus_sum;
-		if (denom == 0) dx = 1;
+		if (denom == 0) dx = 0;
 		else dx = fabs(data->d_plus_sum-data->d_minus_sum) / denom;
 		if (data->current <= 2*periods-1) {
 			data->adx_sum = data->adx_sum + dx;
@@ -148,7 +152,7 @@ DLLEXP double ta_adx_agg(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *
 	int *periods = (int *)args->args[ADX_NUM_ARGS-1];
 	int n = *periods;
 
-	if (2*n-1 > data->current) {
+	if (2*n-1 >= data->current) {
 		*is_null = 1;
 		return 0.0;
 	} else {

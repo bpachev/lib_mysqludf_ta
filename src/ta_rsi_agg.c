@@ -124,7 +124,7 @@ DLLEXP double ta_rsi_agg(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *
 	struct ta_rsi_agg_data *data = (struct ta_rsi_agg_data *)initid->ptr;
 	int *periods = (int *)args->args[1];
 
-	if ((*periods) + 1 >= data->current) {
+	if ((*periods) >= data->current) {
 		*is_null = 1;
 		return 0.0;
 	} else {
