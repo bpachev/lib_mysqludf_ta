@@ -24,7 +24,9 @@ lib_mysqludf_ta_la_SOURCES = src/ta_libmysqludf_ta.h \
 				src/ta_atr_agg.c \
 				src/ta_previous_agg.c \
 				src/ta_tr.c \
-				src/ta_pn_agg.c
+				src/ta_pn_agg.c \
+				src/ta_beta.c \
+				src/ta_volatility.c
 lib_mysqludf_ta_la_CFLAGS = -Wall -c @MYSQL_CFLAGS@
 lib_mysqludf_ta_la_LDFLAGS = -shared
 dist_pkgdata_DATA=setup/*
