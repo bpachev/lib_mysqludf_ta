@@ -11,6 +11,7 @@
 #include <mysql.h>
 #include <ctype.h>
 #include "ta_libmysqludf_ta.h"
+#define ID_ARGNUM 2
 
 /*
    CREATE FUNCTION ta_ema RETURNS REAL SONAME 'lib_mysqludf_ta.so';
@@ -22,6 +23,7 @@ struct ta_ema_data {
 	int current;
 	double last_value;
 	double alpha;
+	ta_id_info id_info;
 };
 
 DLLEXP my_bool ta_ema_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
@@ -30,8 +32,8 @@ DLLEXP my_bool ta_ema_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
 
 	initid->maybe_null = 1;
 
-	if (args->arg_count != 2) {
-		strcpy(message, "ta_ema() requires two arguments");
+	if (args->arg_count < 2) {
+		strcpy(message, "Usage ta_ema(value, periods, [id_str])");
 		return 1;
 	}
 
@@ -52,6 +54,11 @@ DLLEXP my_bool ta_ema_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
 		return 1;
 	}
 
+	data->id_info = init_ta_id(args, ID_ARGNUM);
+	if (data->id_info.type == TA_ID_INIT_ERROR) {
+		strcpy(message, "ta_ema() couldn't allocate memory for id initialization");
+	}
+
 	data->alpha = 2 / (double)((*(int *)args->args[1]) + 1);
 	data->sum = 0;
 	data->current = 0;
@@ -63,6 +70,7 @@ DLLEXP my_bool ta_ema_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
 
 DLLEXP void ta_ema_deinit(UDF_INIT *initid)
 {
+	deinit_ta_id(&((struct ta_ema_data *)initid->ptr)->id_info);
 	free(initid->ptr);
 }
 
@@ -72,21 +80,23 @@ DLLEXP double ta_ema(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *erro
 	int *periods = (int *)args->args[1];
 
 	if (args->args[0] == NULL) {
-		if (data->current > 0) {
-			fprintf(stderr, "ema() Can't handle NULL values in middle of dataset\n");
-			*error = 1;
-			return 0;
-		}
 		*is_null = 1;
 		return 0.0;
+	}
+
+	if (data->id_info.type != NO_ID) {
+		if (ta_compare_id(args, ID_ARGNUM, &(data->id_info))) {
+			data->current = 0; //Reset the counter, as we are processing a new group of IDs
+			data->sum = 0.0;
+		}		
 	}
 
 	data->current = data->current + 1;
 
 	if (*periods > data->current) {
+		//This function will be used for smoothing purposes. In the application, we want to return a value even if there aren't enough periods. We default to the average in that case
 		data->sum += *((double*)args->args[0]);
-		*is_null = 1;
-		return 0.0;
+		return data->sum/data->current;
 	} else {
 		if (*periods == data->current)
 			data->last_value = (data->sum + *((double*)args->args[0])) / (data->current);
